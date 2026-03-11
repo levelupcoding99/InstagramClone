@@ -61,18 +61,20 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       valueListenable: _controller.videoStateNotifier,
       builder: (_, isLoaded, __) {
         if (isLoaded) {
-          return AspectRatio(
-            aspectRatio: _controller.aspectRatio,
+          return SizedBox(
+            width: _size.width,
+            height: _size.height,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: VideoPlayer(_controller.videoController),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: _controller.videoController.value.aspectRatio,
+                    child: VideoPlayer(_controller.videoController),
+                  ),
                 ),
 
                 Positioned.fill(child: _volumeButton()),
-
                 Align(alignment: Alignment.bottomCenter, child: _bottomBar()),
               ],
             ),
@@ -96,47 +98,44 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   Widget _bottomBar() {
     return SizedBox(
       width: _size.width,
+      height: 5,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           ValueListenableBuilder<Duration>(
             valueListenable: _timelineNotifier!,
             builder: (_, duration, _) {
-              return Transform.translate(
-                offset: const Offset(0, 30),
-                child: SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    thumbShape: RoundSliderThumbShape(enabledThumbRadius: 0.0),
-                    overlayShape: RoundSliderOverlayShape(overlayRadius: 0.0),
-                    trackHeight: 2,
-                  ),
-                  child: Slider(
-                    activeColor: Colors.grey,
-                    inactiveColor: Colors.black12,
+              return SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 0.0),
+                  overlayShape: RoundSliderOverlayShape(overlayRadius: 0.0),
+                  trackHeight: 2,
+                ),
+                child: Slider(
+                  activeColor: Colors.grey,
+                  inactiveColor: Colors.black12,
 
-                    thumbColor: Colors.white.withAlpha(0),
-                    min: 0.0,
-                    max: 1.0,
-                    value:
-                        (duration.inMilliseconds /
-                                _controller
-                                    .getVideoValue
-                                    .duration
-                                    .inMilliseconds) <
-                            1.0
-                        ? (duration.inMilliseconds /
-                              _controller.getVideoValue.duration.inMilliseconds)
-                        : 0.0,
-                    onChanged: (value) {
-                      double touchedPosition =
-                          value *
-                          _controller.getVideoValue.duration.inMilliseconds;
+                  thumbColor: Colors.white.withAlpha(0),
+                  min: 0.0,
+                  max: 1.0,
+                  value:
+                      (duration.inMilliseconds /
+                              _controller
+                                  .getVideoValue
+                                  .duration
+                                  .inMilliseconds) <
+                          1.0
+                      ? (duration.inMilliseconds /
+                            _controller.getVideoValue.duration.inMilliseconds)
+                      : 0.0,
+                  onChanged: (value) {
+                    double touchedPosition =
+                        value *
+                        _controller.getVideoValue.duration.inMilliseconds;
 
-                      _controller.seekTo(
-                        Duration(milliseconds: touchedPosition.round()),
-                      );
-                    },
-                  ),
+                    _controller.seekTo(
+                      Duration(milliseconds: touchedPosition.round()),
+                    );
+                  },
                 ),
               );
             },

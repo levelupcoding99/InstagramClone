@@ -1,5 +1,6 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+require 'logger'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -36,8 +37,31 @@ target 'Runner' do
   end
 end
 
+# post_install do |installer|
+#   installer.pods_project.targets.each do |target|
+#     flutter_additional_ios_build_settings(target)
+#   end
+# end
+
+#post_install do |installer|
+#  installer.pods_project.targets.each do |target|
+#    flutter_additional_ios_build_settings(target)
+#    target.build_configurations.each do |config|
+#      # 여기서 모든 타겟의 최소 버전을 13.0으로 강제 통일시킵니다.
+#      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+#    end
+#  end
+#end
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      # 샌드박싱 강제 비활성화 한 번 더 명시
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+
+      # rsync 경로 에러 방지 (핵심!)
+      config.build_settings['EXPANDED_CODE_SIGN_DISTINCT_COMMON_NAME'] = '"'
+    end
   end
 end
