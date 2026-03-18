@@ -1,0 +1,65 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
+
+class HttpManager {
+  static final HttpManager instance = HttpManager._internal();
+  final dio = Dio();
+  HttpManager._internal();
+
+  Future<void> postData() async {
+    try {
+      final response = await dio.post(
+        "https://orange-violet-79d6.levelupcoding12.workers.dev/uploads/reels",
+        options: Options(headers: {'Content-Type': 'application/json'}),
+        data: {'userId': 'sf90s-sdf87-we76s', "contentType": "video/mp4"},
+      );
+      print(response.data);
+      putRequest(url: response.data["uploadUrl"]);
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> uploadFile(String filePath) async {
+    final file = await MultipartFile.fromFile(filePath);
+    final formData = FormData.fromMap({'file': file});
+
+    final response = await dio.post(
+      'https://example.com/upload',
+      data: formData,
+    );
+    print('File uploaded: ${response.statusCode}');
+  }
+
+  // PUT 요청
+  Future<void> putRequest({required String url}) async {
+    try {
+      // FilePickerResult? result = await FilePicker.platform.pickFiles(
+      //   type: FileType.video,
+      //   withData: true, // 웹에서는 데이터를 바이트로 가져와야 함
+      // );
+
+      ByteData byteData = await rootBundle.load('IMG_3297.mp4');
+      // 2. ByteData를 Uint8List(bytes)로 변환
+      Uint8List bytes = byteData.buffer.asUint8List();
+      // if (result != null) {
+      //   final fileBytes = result.files.first.bytes;
+      //   final fileName = result.files.first.name;
+
+      // if (fileBytes != null) {
+      final response = await dio.put(
+        url,
+        data: bytes,
+        options: Options(headers: {"Content-Type": "video/mp4"}),
+      );
+      print('응답 데이터: ${response.data}');
+      //   }
+      // }
+    } catch (e) {
+      print('에러: $e');
+    }
+  }
+}

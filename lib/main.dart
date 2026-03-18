@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_instagram/widgets/video/CustomVideoController.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_instagram/stateManager/LikeChangeNotifier.dart';
+import 'package:flutter_instagram/util/firestore/FireStoreManager.dart';
+import 'package:flutter_instagram/util/http/HttpManager.dart';
+import 'package:provider/provider.dart';
+import 'firebase_options.dart';
+import 'package:flutter_instagram/data/ReelsData.dart';
 import 'package:flutter_instagram/widgets/video/VideoPlayerWidget.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MyApp());
 }
 
@@ -24,23 +34,87 @@ class Reels extends StatefulWidget {
 }
 
 class _Reels extends State<Reels> {
-  late CustomVideoController _controller;
-  final ScrollController _scrollController = ScrollController();
-  List<String> items = [
-    'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-    'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-    'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-    'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-    'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-    'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
+  final PageController _pageController = PageController(initialPage: 0);
+  final LikeChangeNotifier _likeChangeNotifier = LikeChangeNotifier();
+  // List<ReelsData> reelsData = [
+  //   ReelsData(
+  //     id: "123456",
+  //     userId: "e123456",
+  //     contents: "동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 ",
+  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
+  //     nickname: "kelee9632",
+  //     likes: 1,
+  //     chatCount: 1,
+  //     rePost: 1,
+  //     dm: 1,
+  //   ),
+  //   ReelsData(
+  //     id: "123457",
+  //     userId: "e123457",
+  //     contents: "동영상2",
+  //     video: 'https://va.media.tumblr.com/tumblr_tbhmqfxti51tvhzlo.mp4',
+  //     nickname: "dodo",
+  //     likes: 12,
+  //     chatCount: 15567,
+  //     rePost: 133,
+  //     dm: 17777,
+  //   ),
+  //   ReelsData(
+  //     id: "123458",
+  //     userId: "e123458",
+  //     contents: "동영상3",
+  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
+  //     nickname: "kelee9632",
+  //     likes: 156,
+  //     chatCount: 1,
+  //     rePost: 1,
+  //     dm: 1,
+  //   ),
+  //   ReelsData(
+  //     id: "123451",
+  //     userId: "e123451",
+  //     contents: "동영상4",
+  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
+  //     nickname: "kelee9632",
+  //     likes: 1,
+  //     chatCount: 1,
+  //     rePost: 1,
+  //     dm: 1,
+  //   ),
+  //   ReelsData(
+  //     id: "123453",
+  //     userId: "e123453",
+  //     contents: "동영상5",
+  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
+  //     nickname: "kelee9632",
+  //     likes: 1,
+  //     chatCount: 1,
+  //     rePost: 1,
+  //     dm: 1,
+  //   ),
+  // ];
+  late List<ReelsData> _reelsData = [
+    ReelsData(
+      id: '',
+      userId: '',
+      contents: '',
+      video: '',
+      nickname: '',
+      likes: 0,
+      chatCount: 0,
+      rePost: 0,
+      dm: 0,
+    ),
   ];
 
   @override
   void initState() {
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent &&
-          !_scrollController.position.outOfRange) {
+    _loadMoreData();
+    _pageController.addListener(() {
+      //_pageController.page
+      if (_pageController.position.pixels >=
+              _pageController.position.maxScrollExtent &&
+          !_pageController.position.outOfRange) {
         // 끝에 도달했을 때 실행할 동작 (예: 데이터 더 불러오기)
         print("리스트 끝에 도달했습니다.");
         _loadMoreData();
@@ -50,13 +124,26 @@ class _Reels extends State<Reels> {
   }
 
   void _loadMoreData() {
-    // 데이터 추가 로직
-    setState(() {});
+    HttpManager.instance.postData();
+    Future<List<ReelsData>> futureReelsData = FireStoreManager.instance
+        .getReelsData();
+
+    futureReelsData
+        .then((val) {
+          setState(() {
+            _reelsData = val;
+
+            // for (data in val.)
+          });
+        })
+        .catchError((error) {
+          print('error: $error');
+        });
   }
 
   @override
   void dispose() {
-    _scrollController.dispose(); // 컨트롤러 해제
+    _pageController.dispose(); // 컨트롤러 해제
     super.dispose();
   }
 
@@ -64,17 +151,20 @@ class _Reels extends State<Reels> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: PageView.builder(
-        controller: PageController(initialPage: 0),
-        scrollDirection: Axis.vertical,
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          return VideoPlayerWidget(
-            key: ValueKey(items[index]),
-            videoController: CustomVideoController(videoUrl: items[index]),
-          );
-          // );
-        },
+      body: ChangeNotifierProvider(
+        create: (context) => _likeChangeNotifier,
+        child: PageView.builder(
+          controller: _pageController,
+          scrollDirection: Axis.vertical,
+          itemCount: _reelsData.length,
+          itemBuilder: (context, index) {
+            return VideoPlayerWidget(
+              key: ValueKey(_reelsData[index]),
+              reelsData: _reelsData[index],
+            );
+            // );
+          },
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.black,

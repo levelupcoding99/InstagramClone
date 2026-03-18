@@ -19,12 +19,12 @@ class IconNumberButton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: .center,
         children: [
-          Icon(iconData, color: Colors.white),
+          Icon(size: 25, iconData, color: Colors.white),
           Text(
             "$number",
             style: TextStyle(
               color: Colors.white,
-              fontSize: 14,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),

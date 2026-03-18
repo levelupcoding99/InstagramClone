@@ -1,20 +1,32 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_instagram/stateManager/LikeChangeNotifier.dart';
+import 'package:flutter_instagram/util/firestore/FireStoreManager.dart';
+import 'package:flutter_instagram/widgets/IconNumberButton.dart';
+import 'package:flutter_instagram/widgets/ImageNumberButton.dart';
 import 'package:flutter_instagram/widgets/video/VolumeIconWidget.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../data/ReelsData.dart';
 import 'CustomVideoController.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
-  final CustomVideoController videoController;
+  late final CustomVideoController videoController;
+  final ReelsData reelsData;
   final Widget? placeHolder;
   final Size? widgetSize;
 
-  const VideoPlayerWidget({
+  VideoPlayerWidget({
     super.key,
-    required this.videoController,
+    required this.reelsData,
     this.placeHolder,
     this.widgetSize,
-  });
+  }) {
+    videoController = CustomVideoController(videoUrl: reelsData.video);
+  }
 
   @override
   State<StatefulWidget> createState() => _VideoPlayerWidgetState();
@@ -56,6 +68,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   Widget build(BuildContext context) {
     _size = widget.widgetSize ?? MediaQuery.of(context).size;
+    final likeManager = context.watch<LikeChangeNotifier>;
 
     return ValueListenableBuilder<bool>(
       valueListenable: _controller.videoStateNotifier,
@@ -76,6 +89,21 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
                 Positioned.fill(child: _volumeButton()),
                 Align(alignment: Alignment.bottomCenter, child: _bottomBar()),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: _rightBar(
+                    reelsData: widget.reelsData,
+                    likeManager: likeManager(),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: userInfo(
+                    context,
+                    "https://picsum.photos/600/600",
+                    widget.reelsData,
+                  ),
+                ),
               ],
             ),
           );
@@ -144,4 +172,171 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       ),
     );
   }
+}
+
+Widget _rightBar({
+  required ReelsData reelsData,
+  required LikeChangeNotifier likeManager,
+}) {
+  bool isLike = false;
+
+  void likeAction() {
+    if (isLike) {
+      FireStoreManager.instance.clickedLike(reelsData.id, -1);
+      likeManager.changeLike(reelsData.id, false);
+    } else {
+      FireStoreManager.instance.clickedLike(reelsData.id, 1);
+      likeManager.changeLike(reelsData.id, true);
+    }
+    isLike = !isLike;
+  }
+
+  void chatOpen() {}
+  void regramAction() {}
+  void dmAction() {}
+  void etcAction() {}
+  void musicAction() {}
+
+  return SizedBox(
+    width: 50,
+    height: 400,
+    child: Column(
+      mainAxisAlignment: .center,
+      crossAxisAlignment: .center,
+      spacing: 20,
+      children: [
+        ImageNumberButton(
+          key: ValueKey('likes'),
+          normalImageName: 'assets/like.png',
+          chageImage: Image.asset(
+            'assets/like_fill.png',
+            width: 25,
+            height: 25,
+            fit: BoxFit.fitWidth,
+          ),
+          number: likeManager.likeMap[reelsData.id] ?? 0,
+          onPressed: likeAction,
+        ),
+        IconNumberButton(
+          iconData: Icons.chat_bubble_outline,
+          number: reelsData.chatCount,
+          onPressed: chatOpen,
+        ),
+        IconNumberButton(
+          iconData: Icons.read_more,
+          number: reelsData.rePost,
+          onPressed: regramAction,
+        ),
+        IconNumberButton(
+          iconData: Icons.mark_chat_unread_outlined,
+          number: reelsData.dm,
+          onPressed: dmAction,
+        ),
+        IconButton(
+          onPressed: etcAction,
+          icon: Icon(size: 25, Icons.more_horiz, color: Colors.white),
+        ),
+        musicImage(
+          imageUrl: "https://picsum.photos/600/600",
+          tapGesture: musicAction,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget musicImage({
+  required String imageUrl,
+  required VoidCallback tapGesture,
+}) {
+  return CachedNetworkImage(
+    imageUrl: imageUrl,
+    imageBuilder: (context, imageProvider) => GestureDetector(
+      onTap: tapGesture,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+        ),
+      ),
+    ),
+    placeholder: (context, url) => CircularProgressIndicator(),
+    errorWidget: (context, url, error) => Icon(Icons.error),
+  );
+}
+
+Widget profileImage({
+  required String imageUrl,
+  required VoidCallback tapGesture,
+}) {
+  return CachedNetworkImage(
+    imageUrl: imageUrl,
+    imageBuilder: (context, imageProvider) => GestureDetector(
+      onTap: tapGesture,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+        ),
+      ),
+    ),
+    placeholder: (context, url) => CircularProgressIndicator(),
+    errorWidget: (context, url, error) => Icon(Icons.error),
+  );
+}
+
+Widget userInfo(BuildContext context, String imageUrl, ReelsData reelsData) {
+  void profileImageAction() {}
+  void follow() {}
+  return SizedBox(
+    width: MediaQuery.of(context).size.width - 50,
+    height: 120,
+    child: Column(
+      crossAxisAlignment: .start,
+      children: [
+        Row(
+          mainAxisAlignment: .start,
+          crossAxisAlignment: .center,
+          spacing: 10,
+          children: [
+            profileImage(imageUrl: imageUrl, tapGesture: profileImageAction),
+            Text(
+              reelsData.nickname,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            OutlinedButton(
+              onPressed: follow,
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white, width: 1),
+                fixedSize: Size(100, 30),
+              ),
+              child: Text(
+                '팔로우',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Text(
+          reelsData.contents,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
+      ],
+    ),
+  );
 }
