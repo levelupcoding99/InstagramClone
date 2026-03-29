@@ -36,63 +36,6 @@ class Reels extends StatefulWidget {
 class _Reels extends State<Reels> {
   final PageController _pageController = PageController(initialPage: 0);
   final LikeChangeNotifier _likeChangeNotifier = LikeChangeNotifier();
-  // List<ReelsData> reelsData = [
-  //   ReelsData(
-  //     id: "123456",
-  //     userId: "e123456",
-  //     contents: "동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 동영상1 ",
-  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-  //     nickname: "kelee9632",
-  //     likes: 1,
-  //     chatCount: 1,
-  //     rePost: 1,
-  //     dm: 1,
-  //   ),
-  //   ReelsData(
-  //     id: "123457",
-  //     userId: "e123457",
-  //     contents: "동영상2",
-  //     video: 'https://va.media.tumblr.com/tumblr_tbhmqfxti51tvhzlo.mp4',
-  //     nickname: "dodo",
-  //     likes: 12,
-  //     chatCount: 15567,
-  //     rePost: 133,
-  //     dm: 17777,
-  //   ),
-  //   ReelsData(
-  //     id: "123458",
-  //     userId: "e123458",
-  //     contents: "동영상3",
-  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-  //     nickname: "kelee9632",
-  //     likes: 156,
-  //     chatCount: 1,
-  //     rePost: 1,
-  //     dm: 1,
-  //   ),
-  //   ReelsData(
-  //     id: "123451",
-  //     userId: "e123451",
-  //     contents: "동영상4",
-  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-  //     nickname: "kelee9632",
-  //     likes: 1,
-  //     chatCount: 1,
-  //     rePost: 1,
-  //     dm: 1,
-  //   ),
-  //   ReelsData(
-  //     id: "123453",
-  //     userId: "e123453",
-  //     contents: "동영상5",
-  //     video: 'https://vt.tumblr.com/tumblr_o600t8hzf51qcbnq0_480.mp4',
-  //     nickname: "kelee9632",
-  //     likes: 1,
-  //     chatCount: 1,
-  //     rePost: 1,
-  //     dm: 1,
-  //   ),
-  // ];
   late List<ReelsData> _reelsData = [
     ReelsData(
       id: '',
@@ -124,7 +67,6 @@ class _Reels extends State<Reels> {
   }
 
   void _loadMoreData() {
-    HttpManager.instance.postData();
     Future<List<ReelsData>> futureReelsData = FireStoreManager.instance
         .getReelsData();
 
@@ -172,7 +114,9 @@ class _Reels extends State<Reels> {
         child: IconButton(
           icon: Icon(Icons.slideshow),
           color: Colors.white,
-          onPressed: () {},
+          onPressed: () {
+            HttpManager.instance.postData();
+          },
         ),
       ),
     );

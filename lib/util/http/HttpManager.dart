@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 class HttpManager {
   static final HttpManager instance = HttpManager._internal();
   final dio = Dio();
+  bool _isPicking = false;
+
   HttpManager._internal();
 
   Future<void> postData() async {
@@ -36,30 +38,42 @@ class HttpManager {
 
   // PUT 요청
   Future<void> putRequest({required String url}) async {
+    if (_isPicking) return;
+    _isPicking = true;
+
     try {
-      // FilePickerResult? result = await FilePicker.platform.pickFiles(
-      //   type: FileType.video,
-      //   withData: true, // 웹에서는 데이터를 바이트로 가져와야 함
-      // );
-
-      ByteData byteData = await rootBundle.load('IMG_3297.mp4');
-      // 2. ByteData를 Uint8List(bytes)로 변환
-      Uint8List bytes = byteData.buffer.asUint8List();
-      // if (result != null) {
-      //   final fileBytes = result.files.first.bytes;
-      //   final fileName = result.files.first.name;
-
-      // if (fileBytes != null) {
-      final response = await dio.put(
-        url,
-        data: bytes,
-        options: Options(headers: {"Content-Type": "video/mp4"}),
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.video,
+        allowMultiple: false,
+        withData: false, // 웹에서는 데이터를 바이트로 가져와야 함
       );
-      print('응답 데이터: ${response.data}');
-      //   }
-      // }
+
+      // ByteData byteData = await rootBundle.load('IMG_3297.mp4');
+      // 2. ByteData를 Uint8List(bytes)로 변환
+      // Uint8List bytes = byteData.buffer.asUint8List();
+      if (result != null) {
+        final filePath = result.files.single.path.toString();
+        File file = File(filePath);
+        Uint8List fileBytes = await file.readAsBytes();
+
+        final response = await dio.put(
+          url,
+          data: fileBytes,
+          options: Options(headers: {"Content-Type": "video/mp4"}),
+          onSendProgress: (sent, total) {
+            print("업로드 중: ${(sent / total * 100).toStringAsFixed(0)}%");
+          },
+        );
+        print('응답 데이터: ${response.toString()}');
+        print('응답 데이터: ${response.statusCode}');
+      } else {
+        print('result none');
+      }
     } catch (e) {
       print('에러: $e');
+    } finally {
+      // 작업이 끝나면 다시 false로 변경
+      _isPicking = false;
     }
   }
 }
