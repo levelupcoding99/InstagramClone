@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 
+import '../String/RandomUUID.dart';
+
 class HttpManager {
   static final HttpManager instance = HttpManager._internal();
   final dio = Dio();
@@ -19,7 +21,8 @@ class HttpManager {
         data: {'userId': 'sf90s-sdf87-we76s', "contentType": "video/mp4"},
       );
       print(response.data);
-      putRequest(url: response.data["uploadUrl"]);
+      await putRequest(url: response.data["uploadUrl"]);
+      await postToFirebase();
     } catch (e) {
       print('Error: $e');
     }
@@ -74,6 +77,26 @@ class HttpManager {
     } finally {
       // 작업이 끝나면 다시 false로 변경
       _isPicking = false;
+    }
+  }
+
+  Future<void> postToFirebase() async {
+    try {
+      final response = await dio.post(
+        "https://orange-violet-79d6.levelupcoding12.workers.dev/uploads/reels/complete",
+        options: Options(headers: {'Content-Type': 'application/json'}),
+        data: {
+          'reelId': RandomUUID().getReelsId(),
+          'userId': 'sf90s-sdf87-we76s',
+          'nickname': 'dodo',
+          'contents': 'cocoding',
+        },
+      );
+      print(response.data);
+      print('응답 데이터3: ${response.toString()}');
+      print('응답 데이터3: ${response.statusCode}');
+    } catch (e) {
+      print('Error end: ${e}');
     }
   }
 }

@@ -15,6 +15,7 @@ import '../../data/ReelsData.dart';
 import 'CustomVideoController.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
+  //stateless로 만들기
   late final CustomVideoController videoController;
   final ReelsData reelsData;
 
