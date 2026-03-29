@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_instagram/stateManager/video/MuteManager.dart';
 import 'package:video_player/video_player.dart';
 
 class CustomVideoController {
@@ -7,7 +8,6 @@ class CustomVideoController {
 
   late VideoPlayerController videoController;
   final String videoUrl;
-  bool muteSound;
 
   /// video loading후 상태변경 용도로 사용
   late ValueNotifier<bool> videoStateNotifier;
@@ -15,7 +15,7 @@ class CustomVideoController {
   /// video 관련 값들, ex: duration(동영상 전체 길이), position(현재 위치)
   VideoPlayerValue get getVideoValue => videoController.value;
 
-  CustomVideoController({required this.videoUrl, this.muteSound = true}) {
+  CustomVideoController({required this.videoUrl}) {
     videoStateNotifier = ValueNotifier(false);
 
     initVideoController().whenComplete(() {
@@ -25,6 +25,7 @@ class CustomVideoController {
     });
   }
 
+  //Q 이건 videoController.valu값이 바뀔떄마다  불리는 걸까?
   double get aspectRatio {
     if (videoController.value.isInitialized) {
       return videoController.value.aspectRatio;
@@ -38,7 +39,7 @@ class CustomVideoController {
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
 
-    await videoController.setVolume(muteSound ? 0.0 : 1.0);
+    await videoController.setVolume(MuteManager.instance.isMute ? 0.0 : 1.0);
     await videoController.setLooping(isLooping);
     await videoController.initialize();
 
@@ -53,9 +54,9 @@ class CustomVideoController {
     }
   }
 
-  Future<void> setMute(bool isMute) async {
-    muteSound = isMute;
-    await videoController.setVolume(isMute ? 0 : 1);
+  Future<void> setMute() async {
+    MuteManager.instance.isMute = !MuteManager.instance.isMute;
+    await videoController.setVolume(MuteManager.instance.isMute ? 0 : 1);
   }
 
   Future<void> setVolume(double volume) async {

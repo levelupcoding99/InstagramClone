@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_instagram/stateManager/video/MuteManager.dart';
 
 class VolumeIconWidget extends StatefulWidget {
-  final bool soundMute;
-
-  VolumeIconWidget({super.key, this.soundMute = false});
+  final VoidCallback clickAction;
+  VolumeIconWidget({super.key, required this.clickAction});
 
   @override
   State<StatefulWidget> createState() => _VolumeIconWidgetState();
@@ -17,14 +17,16 @@ class _VolumeIconWidgetState extends State<VolumeIconWidget> {
 
   @override
   void initState() {
-    _soundMute = widget.soundMute;
+    _soundMute = MuteManager.instance.isMute;
     super.initState();
   }
 
   void manageVisibleState() {
+    widget.clickAction();
+
     setState(() {
       _isVisible = true;
-      _soundMute = !_soundMute;
+      _soundMute = MuteManager.instance.isMute;
     });
 
     _timer?.cancel();

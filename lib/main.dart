@@ -35,7 +35,6 @@ class Reels extends StatefulWidget {
 
 class _Reels extends State<Reels> {
   final PageController _pageController = PageController(initialPage: 0);
-  final LikeChangeNotifier _likeChangeNotifier = LikeChangeNotifier();
   late List<ReelsData> _reelsData = [
     ReelsData(
       id: '',
@@ -93,20 +92,17 @@ class _Reels extends State<Reels> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: ChangeNotifierProvider(
-        create: (context) => _likeChangeNotifier,
-        child: PageView.builder(
-          controller: _pageController,
-          scrollDirection: Axis.vertical,
-          itemCount: _reelsData.length,
-          itemBuilder: (context, index) {
-            return VideoPlayerWidget(
-              key: ValueKey(_reelsData[index]),
-              reelsData: _reelsData[index],
-            );
-            // );
-          },
-        ),
+      body: PageView.builder(
+        controller: _pageController,
+        scrollDirection: Axis.vertical,
+        itemCount: _reelsData.length,
+        itemBuilder: (context, index) {
+          return VideoPlayerWidget(
+            key: ValueKey(_reelsData[index]),
+            reelsData: _reelsData[index],
+          );
+          // );
+        },
       ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.black,

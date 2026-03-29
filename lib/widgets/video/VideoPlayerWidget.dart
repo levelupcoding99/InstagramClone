@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_instagram/stateManager/LikeChangeNotifier.dart';
+import 'package:flutter_instagram/stateManager/video/MuteManager.dart';
 import 'package:flutter_instagram/util/firestore/FireStoreManager.dart';
 import 'package:flutter_instagram/widgets/IconNumberButton.dart';
 import 'package:flutter_instagram/widgets/ImageNumberButton.dart';
@@ -16,15 +17,8 @@ import 'CustomVideoController.dart';
 class VideoPlayerWidget extends StatefulWidget {
   late final CustomVideoController videoController;
   final ReelsData reelsData;
-  final Widget? placeHolder;
-  final Size? widgetSize;
 
-  VideoPlayerWidget({
-    super.key,
-    required this.reelsData,
-    this.placeHolder,
-    this.widgetSize,
-  }) {
+  VideoPlayerWidget({super.key, required this.reelsData}) {
     videoController = CustomVideoController(videoUrl: reelsData.video);
   }
 
@@ -46,7 +40,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void initState() {
     super.initState();
     _controller = widget.videoController;
-    _volumeNotifier = ValueNotifier(_controller.muteSound);
+    _volumeNotifier = ValueNotifier(MuteManager.instance.isMute);
     _timelineNotifier = ValueNotifier(Duration.zero);
 
     _controller.addListener(_listener);
@@ -67,8 +61,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    _size = widget.widgetSize ?? MediaQuery.of(context).size;
-    final likeManager = context.watch<LikeChangeNotifier>;
+    _size = MediaQuery.of(context).size;
 
     return ValueListenableBuilder<bool>(
       valueListenable: _controller.videoStateNotifier,
@@ -87,14 +80,17 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                   ),
                 ),
 
-                Positioned.fill(child: _volumeButton()),
+                Positioned.fill(
+                  child: VolumeIconWidget(
+                    clickAction: () {
+                      widget.videoController.setMute();
+                    },
+                  ),
+                ),
                 Align(alignment: Alignment.bottomCenter, child: _bottomBar()),
                 Align(
                   alignment: Alignment.bottomRight,
-                  child: _rightBar(
-                    reelsData: widget.reelsData,
-                    likeManager: likeManager(),
-                  ),
+                  child: _rightBar(reelsData: widget.reelsData),
                 ),
                 Align(
                   alignment: Alignment.bottomLeft,
@@ -108,20 +104,20 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             ),
           );
         } else {
-          return widget.placeHolder ?? Container(color: Colors.black);
+          return Container(color: Colors.black);
         }
       },
     );
   }
 
-  Widget _volumeButton() {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _volumeNotifier!,
-      builder: (_, isMute, _) {
-        return VolumeIconWidget(soundMute: isMute);
-      },
-    );
-  }
+  // Widget _volumeButton() {
+  //   return ValueListenableBuilder<bool>(
+  //     valueListenable: _volumeNotifier!,
+  //     builder: (_, isMute, _) {
+  //       return VolumeIconWidget(soundMute: isMute);
+  //     },
+  //   );
+  // }
 
   Widget _bottomBar() {
     return SizedBox(
@@ -174,19 +170,16 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 }
 
-Widget _rightBar({
-  required ReelsData reelsData,
-  required LikeChangeNotifier likeManager,
-}) {
+Widget _rightBar({required ReelsData reelsData}) {
   bool isLike = false;
 
   void likeAction() {
     if (isLike) {
       FireStoreManager.instance.clickedLike(reelsData.id, -1);
-      likeManager.changeLike(reelsData.id, false);
+      // likeManager.changeLike(reelsData.id, false);
     } else {
       FireStoreManager.instance.clickedLike(reelsData.id, 1);
-      likeManager.changeLike(reelsData.id, true);
+      // likeManager.changeLike(reelsData.id, true);
     }
     isLike = !isLike;
   }
@@ -214,7 +207,8 @@ Widget _rightBar({
             height: 25,
             fit: BoxFit.fitWidth,
           ),
-          number: likeManager.likeMap[reelsData.id] ?? 0,
+          // number: likeManager.likeMap[reelsData.id] ?? 0,
+          number: 0,
           onPressed: likeAction,
         ),
         IconNumberButton(
